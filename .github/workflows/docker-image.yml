@@ -9,7 +9,7 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
-  workflow_dispatch: # Added manual trigger
+  workflow_dispatch: # Manual trigger
 
 env:
   IMAGE_NAME: ${{ github.repository }}
@@ -50,8 +50,8 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: docker
-        file: docker/Dockerfile
+        context: .  # Changed from 'docker' to '.' as Dockerfile is in root
+        file: Dockerfile  # Changed from 'docker/Dockerfile' to 'Dockerfile'
         push: ${{ github.event_name != 'pull_request' }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
