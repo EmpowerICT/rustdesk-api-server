@@ -16,4 +16,10 @@ RUN set -ex \
   && rm -rf /var/cache/apk/* \
   && cp -r ./db ./db_bak
 
-…
+ENV HOST="0.0.0.0"Add commentMore actions
+ENV TZ="Australia/Melbourne"
+
+EXPOSE 21114/tcp
+EXPOSE 21114/udp
+
+ENTRYPOINT ["sh", "run.sh"]
