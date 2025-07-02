@@ -16,7 +16,7 @@ RUN set -ex \
   && rm -rf /var/cache/apk/* \
   && cp -r ./db ./db_bak
 
-ENV HOST="0.0.0.0"Add commentMore actions
+ENV HOST="0.0.0.0"
 ENV TZ="Australia/Melbourne"
 
 EXPOSE 21114/tcp
