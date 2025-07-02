@@ -2,14 +2,13 @@ version: "3.8"
 services:
   rustdesk-api-server:
     container_name: rustdesk-api-server
-    build:
-      context: .
+    image: ghcr.io/empowerict/rustdesk-api-server:latest
     environment:
       - HOST=0.0.0.0
-      - TZ=Asia/Shanghai
+      - TZ=Australia/Melbourne
       - CSRF_TRUSTED_ORIGINS=http://yourdomain.com:21114
     volumes:
-      - /yourpath/db:/rustdesk-api-server/db
+      - /bict/rustdesk-api/db:/rustdesk-api-server/db
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     network_mode: bridge
