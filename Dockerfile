@@ -13,8 +13,7 @@ RUN apk add --no-cache \
 
 RUN set -ex \
   && pip install --no-cache-dir --disable-pip-version-check -r requirements.txt \
-  && rm -rf /var/cache/apk/* \
-  && cp -r ./db ./db_bak
+  && rm -rf /var/cache/apk/* 
 
 ENV HOST="0.0.0.0"
 ENV PYTHONUNBUFFERED=1
