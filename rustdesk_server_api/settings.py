@@ -23,23 +23,23 @@ else:
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY", 'j%7yjvygpih=6b%qf!q%&ixpn+27dngzdu-i3xh-^3xgy3^nnc')
-# ID服务器IP或域名，一般与中继服务器，用于web client
+SECRET_KEY = os.environ.get("SECRET_KEY", 'dSKXd*XYWLHCKTQS*4lV6$fmDzBX1%T18T^6OrGoksY@idapP4k9rux0J*v4VNCm')
+# ID server IP or domain name, usually with relay server, used for web client
 ID_SERVER = os.environ.get("ID_SERVER", '')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", False)
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 ALLOWED_HOSTS = ["*"]
-AUTH_USER_MODEL = 'api.UserProfile'      # AppName.自定义user
+AUTH_USER_MODEL = 'api.UserProfile'      # AppName.自定义user (AppName.Custom user)
 
-ALLOW_REGISTRATION = os.environ.get("ALLOW_REGISTRATION", "True")          # 是否允许注册, True为允许，False为不允许
+ALLOW_REGISTRATION = os.environ.get("ALLOW_REGISTRATION", "False")         # Whether to allow registration, True means allowed, False means not allowed
 ALLOW_REGISTRATION = True if ALLOW_REGISTRATION.lower() == 'true' else False
 
 GHUSER = os.environ.get("GHUSER", '')
 GHBEARER = os.environ.get("GHBEARER", '')
 GENURL = os.environ.get("GENURL", '')
 PROTOCOL = os.environ.get("PROTOCOL", 'https')
-REPONAME = os.environ.get("REPONAME", 'rdgen')
+REPONAME = os.environ.get("REPONAME", 'rustdesk-api-server')
 
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
@@ -53,7 +53,7 @@ MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", '-')
 MYSQL_PORT = os.environ.get("MYSQL_PORT", '3306')
 # ==========数据库配置 结束=====================
 
-LANGUAGE_CODE = os.environ.get("LANGUAGE_CODE", 'zh-hans')
+LANGUAGE_CODE = os.environ.get("LANGUAGE_CODE", 'en')
 # #LANGUAGE_CODE = os.environ.get("LANGUAGE_CODE", 'en')
 
 # Application definition
@@ -150,14 +150,14 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en'
 
-TIME_ZONE = 'America/Chicago'
+TIME_ZONE = 'Australia/Melbourne'
 
 USE_I18N = True
 
 USE_L10N = True
 
 # USE_TZ = True
-USE_TZ = False
+USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
