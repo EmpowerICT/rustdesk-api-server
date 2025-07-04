@@ -223,6 +223,10 @@ def generator_view(request):
                 'X-GitHub-Api-Version': '2022-11-28'
             }
             create_github_run(myuuid,filename,platform)
+            if appname == "debug":
+                print(url)
+                print(data)
+                print(headers)
             response = requests.post(url, json=data, headers=headers)
             print(response)
             if response.status_code == 204:
