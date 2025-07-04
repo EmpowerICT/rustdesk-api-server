@@ -229,7 +229,7 @@ def generator_view(request):
                 #return render(request, 'waiting.html', {'filename':filename, 'uuid':myuuid, 'status':"Starting generator...please wait", 'phone_or_desktop': is_mobile(request), 'platform':platform})
                 return HttpResponseRedirect('/api/clients')
             else:
-                return JsonResponse({"error": "Something went wrong"})
+                return JsonResponse({"error": "Something went wrong", details: response})
     else:
         form = GenerateForm()
     return render(request, 'generator.html', {'form': form, 'phone_or_desktop': is_mobile(request)})
