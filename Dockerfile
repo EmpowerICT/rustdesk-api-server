@@ -17,9 +17,11 @@ RUN set -ex \
   && cp -r ./db ./db_bak
 
 ENV HOST="0.0.0.0"
-ENV TZ="Australia/Melbourne"
+ENV PYTHONUNBUFFERED=1
 
 EXPOSE 21114/tcp
 EXPOSE 21114/udp
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD wget --spider 0.0.0.0:21114
 
 ENTRYPOINT ["sh", "run.sh"]
