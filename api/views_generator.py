@@ -53,6 +53,7 @@ def generator_view(request):
             compname = form.cleaned_data['compname']
             if not compname:
                 compname = "Purslane Ltd"
+            compname = compname.replace("&","\\&")
             permPass = form.cleaned_data['permanentPassword']
             theme = form.cleaned_data['theme']
             themeDorO = form.cleaned_data['themeDorO']
@@ -77,13 +78,13 @@ def generator_view(request):
             defaultManual = form.cleaned_data['defaultManual']
             overrideManual = form.cleaned_data['overrideManual']
 
-            # if all(char.isascii() for char in filename):
-            #     filename = re.sub(r'[^\w\s-]', '_', filename).strip()
-            #     filename = filename.replace(" ","_")
-            # else:
-            #     filename = "rustdesk"
-            # if not all(char.isascii() for char in appname):
-            #     appname = "rustdesk"
+            if all(char.isascii() for char in filename):
+                filename = re.sub(r'[^\w\s-]', '_', filename).strip()
+                filename = filename.replace(" ","_")
+            else:
+                filename = "rustdesk"
+            if not all(char.isascii() for char in appname):
+                appname = "rustdesk"
             myuuid = str(uuid.uuid4())
             protocol = _settings.PROTOCOL
             host = request.get_host()
@@ -124,9 +125,9 @@ def generator_view(request):
                     decodedCustom['default-settings']['theme'] = theme
                 elif themeDorO == "override":
                     decodedCustom['override-settings']['theme'] = theme
-            decodedCustom['approve-mode'] = passApproveMode
+            #decodedCustom['approve-mode'] = passApproveMode
             decodedCustom['enable-lan-discovery'] = 'N' if denyLan else 'Y'
-            decodedCustom['direct-server'] = 'Y' if enableDirectIP else 'N'
+            #decodedCustom['direct-server'] = 'Y' if enableDirectIP else 'N'
             decodedCustom['allow-auto-disconnect'] = 'Y' if autoClose else 'N'
             decodedCustom['allow-remove-wallpaper'] = 'Y' if removeWallpaper else 'N'
             if permissionsDorO == "default":
@@ -140,6 +141,10 @@ def generator_view(request):
                 decodedCustom['default-settings']['enable-record-session'] = 'Y' if enableRecording else 'N'
                 decodedCustom['default-settings']['enable-block-input'] = 'Y' if enableBlockingInput else 'N'
                 decodedCustom['default-settings']['allow-remote-config-modification'] = 'Y' if enableRemoteModi else 'N'
+                decodedCustom['default-settings']['direct-server'] = 'Y' if enableDirectIP else 'N'
+                decodedCustom['default-settings']['hide-cm'] = 'Y' if hidecm else 'N'
+                decodedCustom['default-settings']['verification-method'] = 'use-permanent-password' if hidecm else 'use-both-passwords'
+                decodedCustom['default-settings']['approve-mode'] = passApproveMode
             else:
                 decodedCustom['override-settings']['access-mode'] = permissionsType
                 decodedCustom['override-settings']['enable-keyboard'] = 'Y' if enableKeyboard else 'N'
