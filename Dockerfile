@@ -1,4 +1,4 @@
-FROM python:3.10.3-alpine
+FROM python:3-alpine
 
 WORKDIR /rustdesk-api-server
 ADD . /rustdesk-api-server
