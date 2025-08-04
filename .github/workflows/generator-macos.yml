@@ -1,5 +1,3 @@
-on latest macos, rustdesk I built is not running. One person suggesting Disable Library Validation. This is my workflow:
-
 name: Custom macOS Client Generator
 run-name: Custom macOS Client Generator
 on: 
