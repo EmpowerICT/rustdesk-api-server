@@ -1,3 +1,5 @@
+on latest macos, rustdesk I built is not running. One person suggesting Disable Library Validation. This is my workflow:
+
 name: Custom macOS Client Generator
 run-name: Custom macOS Client Generator
 on: 
@@ -624,118 +626,94 @@ jobs:
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"uuid": "${{ inputs.uuid }}", "status": "85% complete"}'
 
-      - name: Sign macOS app bundle
+- name: Sign macOS app bundle
         if: env.MACOS_P12_BASE64 != ''
         run: |
-            cd flutter/build/macos/Build/Products/Release
-            # Debug info
-            echo "Current directory contents:"
-            ls -la
-            
-            # Rename RustDesk.app to the custom app name first
-            if [ -d "RustDesk.app" ]; then
-              # First rename the app if it's still called RustDesk.app
-              mv "RustDesk.app" "${{ inputs.appname }}.app"
-              echo "Renamed RustDesk.app to ${{ inputs.appname }}.app"
-            fi
-            
-            echo "App bundle contents after rename:"
-            ls -la "${{ inputs.appname }}.app" || echo "App not found"
-            ls -la "${{ inputs.appname }}.app/Contents" || echo "Contents not found"
-            
-            # Decode the certificate
-            echo "${{ secrets.MACOS_P12_BASE64 }}" | base64 --decode > certificate.p12
-            
-            # Create entitlements file to disable library validation and allow necessary permissions
-            cat > entitlements.plist << 'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>com.apple.security.cs.disable-library-validation</key>
-    <true/>
-    <key>com.apple.security.cs.allow-jit</key>
-    <true/>
-    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-    <true/>
-    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
-    <true/>
-    <key>com.apple.security.network.client</key>
-    <true/>
-    <key>com.apple.security.network.server</key>
-    <true/>
-    <key>com.apple.security.device.audio-input</key>
-    <true/>
-    <key>com.apple.security.device.camera</key>
-    <true/>
-    <key>com.apple.security.personal-information.location</key>
-    <true/>
-    <key>com.apple.security.files.user-selected.read-write</key>
-    <true/>
-</dict>
-</plist>
-EOF
-            
-            # Sign the app bundle and its contents
-            if [ -d "${{ inputs.appname }}.app/Contents/MacOS" ]; then
-              echo "Signing main executable..."
-              MAIN_EXECUTABLE="${{ inputs.appname }}.app/Contents/MacOS/${{ inputs.appname }}"
-              if [ -f "$MAIN_EXECUTABLE" ]; then
-                rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" \
-                  --code-signature-flags runtime \
-                  --entitlements-xml-file entitlements.plist \
-                  "$MAIN_EXECUTABLE"
-              else
-                echo "Main executable not found at expected path: $MAIN_EXECUTABLE"
-                # Try to find the actual executable
-                echo "Available executables in MacOS directory:"
-                ls -la "${{ inputs.appname }}.app/Contents/MacOS/"
-                ACTUAL_EXECUTABLE=$(ls "${{ inputs.appname }}.app/Contents/MacOS/" | head -n 1)
-                if [ -n "$ACTUAL_EXECUTABLE" ]; then
-                  echo "Found executable: $ACTUAL_EXECUTABLE"
-                  rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" \
-                    --code-signature-flags runtime \
-                    --entitlements-xml-file entitlements.plist \
-                    "${{ inputs.appname }}.app/Contents/MacOS/$ACTUAL_EXECUTABLE"
-                fi
+          cd flutter/build/macos/Build/Products/Release
+
+          # Rename RustDesk.app to the custom app name if it exists [cite: 107, 240]
+          if [ -d "RustDesk.app" ]; then
+            mv "RustDesk.app" "${{ inputs.appname }}.app"
+            echo "Renamed RustDesk.app to ${{ inputs.appname }}.app"
+          fi
+
+          APP_PATH="${{ inputs.appname }}.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "App bundle not found at $APP_PATH"
+            exit 1
+          fi
+
+          # Decode the certificate from secrets [cite: 112, 245]
+          echo "${{ secrets.MACOS_P12_BASE64 }}" | base64 --decode > certificate.p12
+
+          # Create entitlements file to disable library validation and set other permissions 
+          cat > entitlements.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>com.apple.security.cs.disable-library-validation</key>
+              <true/>
+              <key>com.apple.security.cs.allow-jit</key>
+              <true/>
+              <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+              <true/>
+              <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+              <true/>
+              <key>com.apple.security.network.client</key>
+              <true/>
+              <key>com.apple.security.network.server</key>
+              <true/>
+              <key>com.apple.security.device.audio-input</key>
+              <true/>
+              <key>com.apple.security.device.camera</key>
+              <true/>
+              <key>com.apple.security.personal-information.location</key>
+              <true/>
+              <key>com.apple.security.files.user-selected.read-write</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+
+          # --- Signing Process (Inside-Out) ---
+
+          # 1. Sign internal frameworks and dylibs (without entitlements)
+          echo "Signing frameworks and libraries..."
+          find "$APP_PATH/Contents" -depth -type f \( -name "*.dylib" -o -path "*.framework/*" \) | while read -r file; do
+              if file "$file" | grep -q "Mach-O"; then
+                  echo "Signing library/framework: $file"
+                  rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" --code-signature-flags runtime "$file"
               fi
-              
-              echo "Signing frameworks and libraries..."
-              # Sign all dylibs and frameworks
-              find "${{ inputs.appname }}.app/Contents/Frameworks" -name "*.dylib" -o -name "*.framework" | while read -r file; do
-                echo "Signing: $file"
-                rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" \
-                  --code-signature-flags runtime \
-                  --entitlements-xml-file entitlements.plist \
-                  "$file" || echo "Failed to sign $file (non-critical)"
-              done
-              
-              # Sign any other executables
-              find "${{ inputs.appname }}.app/Contents" -type f -perm +111 -not -path "*/MacOS/${{ inputs.appname }}" | while read -r file; do
-                if file "$file" | grep -q "Mach-O"; then
-                  echo "Signing additional executable: $file"
-                  rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" \
-                    --code-signature-flags runtime \
-                    --entitlements-xml-file entitlements.plist \
-                    "$file" || echo "Failed to sign $file (non-critical)"
-                fi
-              done
-              
-              echo "Signing main bundle..."
-              rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" \
-                --code-signature-flags runtime \
-                --entitlements-xml-file entitlements.plist \
-                "${{ inputs.appname }}.app"
-                
-              echo "Verifying signature..."
-              codesign -dv --verbose=4 "${{ inputs.appname }}.app" || true
-              
-            else
-              echo "Error: Invalid app bundle structure"
-              exit 1
+          done
+
+          # 2. Sign all helper executables found within the bundle (with entitlements) [cite: 256, 257, 258]
+          echo "Signing helper executables..."
+          MAIN_EXECUTABLE_PATH="$APP_PATH/Contents/MacOS/${{ inputs.appname }}"
+          find "$APP_PATH/Contents" -depth -type f -perm +111 -not -path "$MAIN_EXECUTABLE_PATH" | while read -r file; do
+            if file "$file" | grep -q "Mach-O"; then
+              echo "Signing helper executable: $file"
+              rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" --code-signature-flags runtime --entitlements-xml-file entitlements.plist "$file"
             fi
-            
-        - name: Create DMG
+          done
+
+          # 3. Sign the main executable (with entitlements) [cite: 248, 251]
+          echo "Signing main executable..."
+          rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" --code-signature-flags runtime --entitlements-xml-file entitlements.plist "$MAIN_EXECUTABLE_PATH"
+
+          # 4. Sign the main application bundle itself (with entitlements) [cite: 118, 260]
+          echo "Signing main application bundle..."
+          rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" --code-signature-flags runtime --entitlements-xml-file entitlements.plist "$APP_PATH"
+
+          # --- Verification and Cleanup ---
+          echo "Verifying signature and notarization acceptance..."
+          [cite_start]codesign -dv --verbose=4 "$APP_PATH" [cite: 260]
+          spctl -a -vvv "$APP_PATH"
+
+          # Clean up secret files
+          rm certificate.p12 entitlements.plist
+
+      - name: Create DMG
         run: |
           cd /Users/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/flutter/build/macos/Build/Products/Release
           # Print directory contents for debugging
