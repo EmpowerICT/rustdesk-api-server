@@ -624,12 +624,12 @@ jobs:
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"uuid": "${{ inputs.uuid }}", "status": "85% complete"}'
 
-- name: Sign macOS app bundle
+      - name: Sign macOS app bundle
         if: env.MACOS_P12_BASE64 != ''
         run: |
           cd flutter/build/macos/Build/Products/Release
 
-          # Rename RustDesk.app to the custom app name if it exists [cite: 107, 240]
+          # Rename RustDesk.app to the custom app name if it exists
           if [ -d "RustDesk.app" ]; then
             mv "RustDesk.app" "${{ inputs.appname }}.app"
             echo "Renamed RustDesk.app to ${{ inputs.appname }}.app"
@@ -641,10 +641,10 @@ jobs:
             exit 1
           fi
 
-          # Decode the certificate from secrets [cite: 112, 245]
+          # Decode the certificate from secrets
           echo "${{ secrets.MACOS_P12_BASE64 }}" | base64 --decode > certificate.p12
 
-          # Create entitlements file to disable library validation and set other permissions 
+          # Create entitlements file to disable library validation and set other permissions
           cat > entitlements.plist << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -685,7 +685,7 @@ jobs:
               fi
           done
 
-          # 2. Sign all helper executables found within the bundle (with entitlements) [cite: 256, 257, 258]
+          # 2. Sign all helper executables found within the bundle (with entitlements)
           echo "Signing helper executables..."
           MAIN_EXECUTABLE_PATH="$APP_PATH/Contents/MacOS/${{ inputs.appname }}"
           find "$APP_PATH/Contents" -depth -type f -perm +111 -not -path "$MAIN_EXECUTABLE_PATH" | while read -r file; do
@@ -695,22 +695,22 @@ jobs:
             fi
           done
 
-          # 3. Sign the main executable (with entitlements) [cite: 248, 251]
+          # 3. Sign the main executable (with entitlements)
           echo "Signing main executable..."
           rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" --code-signature-flags runtime --entitlements-xml-file entitlements.plist "$MAIN_EXECUTABLE_PATH"
 
-          # 4. Sign the main application bundle itself (with entitlements) [cite: 118, 260]
+          # 4. Sign the main application bundle itself (with entitlements)
           echo "Signing main application bundle..."
           rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" --code-signature-flags runtime --entitlements-xml-file entitlements.plist "$APP_PATH"
 
           # --- Verification and Cleanup ---
           echo "Verifying signature and notarization acceptance..."
-          [cite_start]codesign -dv --verbose=4 "$APP_PATH" [cite: 260]
+          codesign -dv --verbose=4 "$APP_PATH"
           spctl -a -vvv "$APP_PATH"
 
           # Clean up secret files
           rm certificate.p12 entitlements.plist
-
+          
       - name: Create DMG
         run: |
           cd /Users/runner/work/${{ github.event.repository.name }}/${{ github.event.repository.name }}/flutter/build/macos/Build/Products/Release
