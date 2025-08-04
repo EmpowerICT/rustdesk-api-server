@@ -691,17 +691,17 @@ jobs:
           find "$APP_PATH/Contents" -depth -type f -perm +111 -not -path "$MAIN_EXECUTABLE_PATH" | while read -r file; do
             if file "$file" | grep -q "Mach-O"; then
               echo "Signing helper executable: $file"
-              rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" --code-signature-flags runtime --entitlements-xml-file entitlements.plist "$file"
+              rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" --code-signature-flags runtime --entitlements-xml-path entitlements.plist "$file"
             fi
           done
 
           # 3. Sign the main executable (with entitlements)
           echo "Signing main executable..."
-          rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" --code-signature-flags runtime --entitlements-xml-file entitlements.plist "$MAIN_EXECUTABLE_PATH"
+          rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" --code-signature-flags runtime --entitlements-xml-path entitlements.plist "$MAIN_EXECUTABLE_PATH"
 
           # 4. Sign the main application bundle itself (with entitlements)
           echo "Signing main application bundle..."
-          rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" --code-signature-flags runtime --entitlements-xml-file entitlements.plist "$APP_PATH"
+          rcodesign sign --p12-file certificate.p12 --p12-password "${{ secrets.MACOS_P12_PASSWORD }}" --code-signature-flags runtime --entitlements-xml-path entitlements.plist "$APP_PATH"
 
           # --- Verification and Cleanup ---
           echo "Verifying signature and notarization acceptance..."
